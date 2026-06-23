@@ -10,12 +10,13 @@ I chose r/television, a large active community where people discuss, debate, and
 ---
 
 ## Labels
+**General rule for mixed posts:** When a post contains both a fact and an opinion (e.g. "Season 2 got confirmed but I think it peaked"), the dominant intent wins. If the point of the post is the take, label it Opinion even if it mentions a news fact.
 
 ### Recommendation
 **Definition:** Users simply asking what shows they should watch.
 **Clear example 1:** "What are you watching and what do you recommend? (Week of June 19, 2026)"
 **Clear example 2:** "Should I watch love island?"
-**Hard case:** "My TV Show List" — gives ranked opinions with reasons to watch. Rule: if primarily asking for or giving watch suggestions, it's Recommendation.
+**Hard case:** "My TV Show List" / ranked lists with reasons — gives ranked opinions AND watch suggestions. Rule: if the post is giving or asking for watch suggestions (even with opinions attached), it's Recommendation. A ranked list that tells you "why you should watch the top 5" is Recommendation.
 
 ### Opinion
 **Definition:** Users stating their own take on a show and inviting debate.
@@ -27,8 +28,7 @@ I chose r/television, a large active community where people discuss, debate, and
 **Definition:** Sourced facts about shows — renewals, cancellations, casting announcements, premiere dates. Does not include fan-made statistics or arguments presented as facts.
 **Clear example 1:** "Jimmy Kimmel taps Rosie O'Donnell as rotating guest host during two-month hiatus"
 **Clear example 2:** "'Devil May Cry' Renewed for Third and Final Season at Netflix"
-**Hard case:** "Since 2020, 2/3rds of all Star Wars media released requires seeing The Clone Wars" — looks like a fact but requires judgment calls. Rule: if it requires interpretation, it's Opinion not News.
-
+**Hard case:** Unsourced casting/renewal speculation (e.g. "did anyone else hear X is casting for season 3?"). Rule: News must be sourced/reported facts. If the post is asking whether others heard something or speculating without a source, it's Opinion, not News.
 ---
 
 ## Data Collection Plan
