@@ -31,11 +31,13 @@ I chose r/television, a large active community where people discuss, debate, and
 
 ---
 
-## Data Collection
+## Data Collection Plan
 
-**Source:** r/television posts collected via Reddit
-**Target:** 200+ labeled examples
-**Collection method:** [fill in when you get to Milestone 2]
+**Source:** r/television — browsing Hot, New, and Top (This Month) feeds manually
+**Target:** 210 total examples, minimum 70 per label
+**Format:** CSV with columns: post_title, post_text, label
+**Collection method:** Manual — browsing r/television and copying post titles and short excerpts directly into the CSV. Used manual collection instead of PRAW due to Reddit's current API restrictions on ML training use cases.
+**If a label is underrepresented:** Will search r/television specifically using terms like "renewed," "cancelled," "casting" for News/Updates, or filter by post flair if available, to reach the 70 minimum per label.
 
 ---
 
@@ -44,3 +46,32 @@ I chose r/television, a large active community where people discuss, debate, and
 **Baseline:** [fill in when you get to the notebook]
 **Fine-tuned model:** [fill in when you get to the notebook]
 **Evaluation approach:** [fill in when you get to the notebook]
+
+## Evaluation Metrics
+
+Accuracy alone is not enough because my dataset is imbalanced — it is skewed toward Opinion and News, with fewer Recommendation posts. A model could score high accuracy just by predicting the two largest classes well while ignoring Recommendation entirely, and accuracy would hide that failure.
+
+Instead I will use per-class precision, recall, and F1 score alongside overall accuracy:
+- **Precision** tells me, when the model predicts a label, how often it is correct (catches false alarms).
+- **Recall** tells me, out of all the actual posts in a label, how many the model correctly caught (catches misses).
+- **F1 score** combines precision and recall into one number per label.
+
+Looking at these per label rather than averaged reveals whether the model handles all three labels well or just the two largest ones. This matters most for the Recommendation class, which has the fewest examples and is most at risk of being ignored.
+
+## Definition of Success
+
+I would consider the classifier good enough for deployment if it reaches:
+- **Overall accuracy of at least 75%** across all three labels.
+- **A minimum F1 score of 65% on every class**, including the weakest (Recommendation).
+
+The per-class floor matters more than the overall number. A model could hit 75% accuracy while almost completely failing on Recommendation — the per-class F1 floor prevents that by requiring the model to perform reasonably on all three post types, not just the two largest. Hitting both targets would mean the tool can reliably sort posts into all three categories well enough to be useful in a real community setting, rather than just defaulting to the most common labels.
+
+## AI Tool Plan
+
+This project has no code to generate, so AI tools help in three specific places:
+
+**Label stress-testing:** I will give an LLM my three label definitions and my identified hard cases, and ask it to generate 5–10 posts that sit at the boundary between two labels. If I can't classify the generated posts cleanly using my definitions, that signals my definitions need tightening — I'll revise them before relying on the dataset.
+
+**Annotation assistance:** I chose NOT to use an LLM to pre-label my data. I hand-labeled all 210 posts myself so I would stay close to the data and apply my own annotation rules consistently, especially on the hard cases. This was a deliberate decision to keep the labeling quality high rather than reviewing machine-generated labels.
+
+**Failure analysis:** After the model runs, I will take the list of misclassified posts and give them to an LLM, asking it to identify patterns in the errors. Specifically I will look for confusion between labels (for example, Opinion vs Recommendation) and whether the model fails on the same hard cases I flagged during planning. I will verify any patterns the LLM suggests myself by checking the actual posts rather than trusting its summary.
