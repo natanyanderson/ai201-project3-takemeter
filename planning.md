@@ -24,7 +24,7 @@ I chose r/television, a large active community where people discuss, debate, and
 **Clear example 2:** "After rewatching Jentry Chau vs. the Underworld, I still think it deserved more room to grow"
 **Hard case:** "What are the best love stories in TV history?" — sits between Opinion and Recommendation. Rule: if asking people to evaluate shows they've seen, it's Opinion.
 
-### News/Updates
+### News
 **Definition:** Sourced facts about shows — renewals, cancellations, casting announcements, premiere dates. Does not include fan-made statistics or arguments presented as facts.
 **Clear example 1:** "Jimmy Kimmel taps Rosie O'Donnell as rotating guest host during two-month hiatus"
 **Clear example 2:** "'Devil May Cry' Renewed for Third and Final Season at Netflix"
