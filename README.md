@@ -68,17 +68,17 @@ The fine-tuned DistilBERT model was compared against a zero-shot Groq (llama-3.3
 | Model | Accuracy |
 |-------|----------|
 | Zero-shot baseline (Groq llama-3.3-70b) | 93.8% |
-| Fine-tuned DistilBERT | 78.1% |
+| Fine-tuned DistilBERT | 75.0% |
 
-The baseline outperformed the fine-tuned model by 15.6 percentage points.
+The baseline outperformed the fine-tuned model by 18.8 percentage points.
 
 ### Per-Class Metrics — Fine-Tuned DistilBERT
 
 | Label | Precision | Recall | F1 | Support |
 |-------|-----------|--------|-----|---------|
-| recommendation | 0.80 | 0.44 | 0.57 | 9 |
-| opinion | 0.67 | 1.00 | 0.80 | 12 |
-| news | 1.00 | 0.82 | 0.90 | 11 |
+| recommendation | 1.00 | 0.11 | 0.20 | 9 |
+| opinion | 0.60 | 1.00 | 0.75 | 12 |
+| news | 1.00 | 1.00 | 1.00 | 11 |
 
 ### Per-Class Metrics — Zero-Shot Baseline (Groq)
 
@@ -90,35 +90,33 @@ The baseline outperformed the fine-tuned model by 15.6 percentage points.
 
 ### Confusion Matrix — Fine-Tuned DistilBERT (Test Set)
 
-Rows are true labels, columns are predicted labels.
-
 | True ↓ / Pred → | recommendation | opinion | news |
 |-----------------|----------------|---------|------|
-| **recommendation** | 4 | 5 | 0 |
+| **recommendation** | 1 | 8 | 0 |
 | **opinion** | 0 | 12 | 0 |
-| **news** | 1 | 1 | 9 |
+| **news** | 0 | 0 | 11 |
 
-The dominant error is recommendation → opinion (5 posts), confirming the model struggles most with the recommendation/opinion boundary. News is the strongest class for both models.
+The model predicted opinion for 8 of 9 recommendation posts — a complete collapse of the recommendation class. News is perfect for both models.
 
 ### Did the Model Meet the Success Criteria?
 
-My planning.md defined success as overall accuracy ≥ 75% and a minimum F1 of 65% on every class. The fine-tuned model hit the accuracy target (78.1%) but failed the per-class F1 floor — recommendation scored only 0.57 F1, below the 0.65 threshold. The model is not yet good enough for deployment by my own criteria, specifically because it cannot reliably identify recommendation posts.
+My planning.md defined success as overall accuracy ≥ 75% and a minimum F1 of 65% on every class. The fine-tuned model exactly hit the accuracy target (75.0%) but badly failed the per-class F1 floor — recommendation scored only 0.20 F1, far below the 0.65 threshold. With a recall of just 0.11, the model correctly identified only 1 of 9 recommendation posts, predicting opinion for the rest. By my own criteria the model is not deployable, specifically because it almost entirely fails to detect recommendation posts.
 
 ## Failure Analysis
 
-The fine-tuned model made 7 errors on the 32-post test set. 5 of the 7 were the same directional error: **recommendation predicted as opinion**. All errors had low confidence (0.34–0.40), meaning the model was guessing near the recommendation/opinion boundary rather than confidently wrong.
+The fine-tuned model made 8 errors on the 32-post test set, and **every single one was the same directional error: recommendation predicted as opinion.** The model correctly identified only 1 of 9 recommendation posts (recall 0.11), dumping the other 8 into opinion. All errors had low confidence (0.35–0.38), meaning the model was guessing near the recommendation/opinion boundary rather than confidently wrong.
 
-**Example 1 — "Suggestions? So far I've finished: Skins, Lost, South Park, Heroes, Merlin, Sherlock, and Alphas."**
-True: recommendation | Predicted: opinion (0.34)
+**Example 1 — "Suggestions? So far I've finished: Skins (UK), Lost, South Park, Heroes, Merlin, Sherlock, and Alphas."**
+True: recommendation | Predicted: opinion (0.35)
 The user lists shows they've already watched. This is the same surface pattern as an opinion post, where users name shows they've seen before sharing a take. The model learned "naming watched shows = opinion," and that signal overpowered the actual request for suggestions. This is a data/boundary problem, not a labeling error — the post is correctly labeled, but recommendation posts in r/television frequently include watch history as context, which structurally overlaps with opinion language. Fix: more recommendation training examples that include watch-history lists.
 
 **Example 2 — "Any good western tv suggestions? I'm currently watching Westworld but I would also like something a little less futuristic."**
-True: recommendation | Predicted: opinion (0.36)
-Same failure type as Example 1. The phrase "I'm currently watching Westworld" names a specific show, which reads as opinion language, even though the post's actual intent is asking for suggestions. The consistency of this error across multiple posts shows the recommendation→opinion confusion is a systematic boundary problem driven by show-name mentions, not random noise. Fix: more recommendation examples where the user names shows they're watching.
+True: recommendation | Predicted: opinion (0.37)
+Same failure type as Example 1. The phrase "I'm currently watching Westworld" names a specific show, which reads as opinion language, even though the post's actual intent is asking for suggestions. The fact that all 8 errors share this exact pattern shows the recommendation→opinion confusion is fully systematic, driven by show-name mentions, not random noise. Fix: more recommendation examples where the user names shows they're watching.
 
-**Example 3 — "Don't Forget These 11 Latino Emmy Contenders, From Selena Gomez to Andy Garcia."**
-True: news | Predicted: recommendation (0.34)
-A different error type. The "Don't Forget These 11..." plus a list of names mirrors the framing recommendation posts use ("here are shows you should watch"), so a news headline about Emmy contenders got read as a suggestion list. This is a data problem — the headline's structure overlaps with recommendation phrasing. Fix: more news examples with list-style or imperative headlines so the model learns that listing names in a headline context is still news.
+**Example 3 — "Need a new series to watch, could anyone suggest one? I recently finished re-watching Breaking Bad and im looking for a new series..."**
+True: recommendation | Predicted: opinion (0.38)
+Again the same pattern — the user names a show they finished (Breaking Bad) while explicitly asking for a suggestion. Even with the direct request "could anyone suggest one," the show-name mention pulled the prediction toward opinion. This confirms the model is keying almost entirely on whether specific shows are named, rather than on whether the post contains a request. Fix: tighter, more diverse recommendation examples, or a larger training set so the model can learn the request signal instead of the show-name shortcut.
 
 ## Sample Classifications
 
@@ -126,15 +124,15 @@ Example posts run through the fine-tuned DistilBERT model, showing predicted lab
 
 | Post | Predicted | Confidence | Correct? |
 |------|-----------|------------|----------|
-| "'E! News' Canceled After 34 Years" | opinion | 0.35 | ❌ (true: news) |
-| "Any good western tv suggestions? I'm currently watching Westworld..." | opinion | 0.36 | ❌ (true: recommendation) |
-| "Don't Forget These 11 Latino Emmy Contenders..." | recommendation | 0.34 | ❌ (true: news) |
-| "Suggestions? So far I've finished: Skins, Lost, South Park..." | opinion | 0.34 | ❌ (true: recommendation) |
-| "Please suggest a good SHORT LIVED TV SHOW..." | opinion | 0.38 | ❌ (true: recommendation) |
+| "'Devil May Cry' Renewed for Third and Final Season at Netflix" | news | 0.38 | ✅ |
+| "Suggestions? So far I've finished: Skins, Lost, South Park..." | opinion | 0.35 | ❌ (true: recommendation) |
+| "Any good western tv suggestions? I'm currently watching Westworld..." | opinion | 0.37 | ❌ (true: recommendation) |
+| "Need a new series to watch, could anyone suggest one?..." | opinion | 0.38 | ❌ (true: recommendation) |
+| "What are some shows you guys suggest?..." | opinion | 0.36 | ❌ (true: recommendation) |
 
-**Why the correct predictions are reasonable:** The model classified news posts with very high confidence and accuracy (F1 0.90). A headline like "'Devil May Cry' Renewed for Third and Final Season at Netflix" is predicted as news because it contains the distinctive vocabulary the model learned for that class — a show name in quotes, a network name, and a factual event (renewal). These structural signals are consistent across news posts and absent from opinion and recommendation posts, which is why news was the model's strongest and most confident category.
+**Why the correct prediction is reasonable:** "'Devil May Cry' Renewed for Third and Final Season at Netflix" is correctly predicted as news with the model's confidence concentrated on that class. The post contains the distinctive vocabulary the model learned for news — a show name in quotes, a network name (Netflix), and a factual event (a renewal). These structural signals are consistent across news posts and absent from opinion and recommendation posts, which is why news was the model's strongest category (perfect F1 of 1.00 this run).
 
-**What the confidence scores reveal:** Every misclassification had low confidence (0.34–0.40), meaning the model was uncertain and essentially guessing near the recommendation/opinion boundary. It was never confidently wrong — the errors cluster exactly where the label boundary is genuinely fuzzy.
+**What the confidence scores reveal:** Every misclassification had low confidence (0.35–0.38), meaning the model was uncertain and essentially guessing near the recommendation/opinion boundary. It was never confidently wrong — the errors cluster exactly where the label boundary is genuinely fuzzy.
 
 ## Reflection: What the Model Captured vs. What I Intended
 
